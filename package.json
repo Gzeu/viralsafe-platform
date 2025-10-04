@@ -1,0 +1,99 @@
+{
+  "name": "viralsafe-platform",
+  "version": "1.0.0",
+  "description": "🚀 ViralSafe - Transformă viralitatea în active digitale prin Web3 și NFT",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "contracts"
+  ],
+  "scripts": {
+    "install:all": "npm install && npm run install:frontend && npm run install:backend && npm run install:contracts",
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd backend && pip install -r requirements.txt",
+    "install:contracts": "cd contracts && npm install",
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:contracts\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && uvicorn main:app --reload --port 8000",
+    "dev:contracts": "cd contracts && npx hardhat node",
+    "build": "npm run build:frontend && npm run build:contracts",
+    "build:frontend": "cd frontend && npm run build",
+    "build:contracts": "cd contracts && npx hardhat compile",
+    "test": "npm run test:frontend && npm run test:backend && npm run test:contracts",
+    "test:frontend": "cd frontend && npm run test",
+    "test:backend": "cd backend && python -m pytest tests/ -v",
+    "test:contracts": "cd contracts && npx hardhat test",
+    "lint": "npm run lint:frontend && npm run lint:contracts",
+    "lint:frontend": "cd frontend && npm run lint",
+    "lint:contracts": "cd contracts && npx solhint 'contracts/**/*.sol'",
+    "deploy:testnet": "cd contracts && npx hardhat run scripts/deploy.js --network bscTestnet",
+    "deploy:mainnet": "cd contracts && npx hardhat run scripts/deploy.js --network bsc",
+    "verify:testnet": "cd contracts && npx hardhat run scripts/verify.js --network bscTestnet",
+    "verify:mainnet": "cd contracts && npx hardhat run scripts/verify.js --network bsc",
+    "clean": "rm -rf node_modules frontend/node_modules contracts/node_modules frontend/.next contracts/artifacts contracts/cache",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docs:serve": "cd docs && python -m http.server 8080"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.1.0",
+    "prettier": "^3.1.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "pre-push": "npm test"
+    }
+  },
+  "lint-staged": {
+    "frontend/**/*.{js,jsx,ts,tsx}": [
+      "cd frontend && npm run lint:fix",
+      "cd frontend && npm run format"
+    ],
+    "contracts/**/*.sol": [
+      "cd contracts && npx solhint"
+    ],
+    "**/*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  },
+  "keywords": [
+    "web3",
+    "nft",
+    "blockchain",
+    "viral",
+    "social",
+    "tiktok",
+    "creator-economy",
+    "defi",
+    "dao",
+    "bnb-chain",
+    "multiversx",
+    "next.js",
+    "fastapi",
+    "hardhat"
+  ],
+  "author": {
+    "name": "George Pricop",
+    "email": "pricopgeorge@gmail.com",
+    "url": "https://github.com/Gzeu"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Gzeu/viralsafe-platform.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Gzeu/viralsafe-platform/issues"
+  },
+  "homepage": "https://github.com/Gzeu/viralsafe-platform#readme",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
