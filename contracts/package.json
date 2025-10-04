@@ -1,0 +1,84 @@
+{
+  "name": "viralsafe-contracts",
+  "version": "1.0.0",
+  "description": "Smart contracts for ViralSafe platform - SAFE token, ViralNFT, and Marketplace",
+  "main": "index.js",
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "test:coverage": "npx hardhat coverage",
+    "test:gas": "REPORT_GAS=true npx hardhat test",
+    "node": "npx hardhat node",
+    "deploy:localhost": "npx hardhat run scripts/deploy.js --network localhost",
+    "deploy:testnet": "npx hardhat run scripts/deploy.js --network bscTestnet",
+    "deploy:mainnet": "npx hardhat run scripts/deploy.js --network bsc",
+    "verify:testnet": "npx hardhat run scripts/verify.js --network bscTestnet",
+    "verify:mainnet": "npx hardhat run scripts/verify.js --network bsc",
+    "flatten": "npx hardhat flatten",
+    "size": "npx hardhat size-contracts",
+    "analyze": "slither contracts/",
+    "lint": "npx solhint 'contracts/**/*.sol'",
+    "lint:fix": "npx solhint 'contracts/**/*.sol' --fix",
+    "format": "npx prettier --write 'contracts/**/*.sol'",
+    "clean": "npx hardhat clean",
+    "setup": "npx hardhat run scripts/setup.js",
+    "mint:testnet": "npx hardhat run scripts/mint-tokens.js --network bscTestnet",
+    "mint:mainnet": "npx hardhat run scripts/mint-tokens.js --network bsc"
+  },
+  "keywords": [
+    "solidity",
+    "ethereum",
+    "bnb-chain",
+    "smart-contracts",
+    "nft",
+    "erc20",
+    "erc721",
+    "defi",
+    "web3",
+    "hardhat",
+    "openzeppelin"
+  ],
+  "author": {
+    "name": "George Pricop",
+    "email": "pricopgeorge@gmail.com",
+    "url": "https://github.com/Gzeu"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.10",
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.6",
+    "@nomicfoundation/hardhat-ethers": "^3.0.5",
+    "@nomicfoundation/hardhat-verify": "^2.0.3",
+    "@typechain/hardhat": "^9.1.0",
+    "@typechain/ethers-v6": "^0.5.1",
+    "@types/chai": "^4.3.11",
+    "@types/mocha": "^10.0.6",
+    "chai": "^4.4.1",
+    "ethers": "^6.8.1",
+    "hardhat": "^2.19.4",
+    "hardhat-gas-reporter": "^1.0.9",
+    "solidity-coverage": "^0.8.5",
+    "typechain": "^8.3.2",
+    "typescript": "^5.3.3",
+    "dotenv": "^16.3.1",
+    "@nomiclabs/hardhat-etherscan": "^3.1.7",
+    "solhint": "^4.0.0",
+    "prettier": "^3.1.1",
+    "prettier-plugin-solidity": "^1.2.0",
+    "hardhat-contract-sizer": "^2.10.0",
+    "hardhat-abi-exporter": "^2.10.1"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.1",
+    "@openzeppelin/contracts-upgradeable": "^5.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Gzeu/viralsafe-platform.git",
+    "directory": "contracts"
+  }
+}
