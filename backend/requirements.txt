@@ -1,0 +1,93 @@
+# FastAPI Core
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.2
+pydantic-settings==2.1.0
+
+# Database
+motor==3.3.2
+pymongo==4.6.0
+redis==5.0.1
+
+# Authentication & Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+bcrypt==4.1.2
+
+# Web3 & Blockchain
+web3==6.11.3
+ethers-py==0.2.0
+
+# IPFS & File Storage
+ipfshttpclient==0.8.0a2
+requests==2.31.0
+
+# Background Tasks
+celery==5.3.4
+redis==5.0.1
+
+# WebSockets
+websockets==12.0
+fastapi-websocket==0.1.7
+
+# External APIs
+httpx==0.25.2
+aiohttp==3.9.1
+
+# Data Processing
+pandas==2.1.4
+numpy==1.26.2
+pillow==10.1.0
+
+# Utilities
+python-dotenv==1.0.0
+typer==0.9.0
+rich==13.7.0
+loguru==0.7.2
+python-dateutil==2.8.2
+pytz==2023.3
+
+# Development & Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-mock==3.12.0
+pytest-cov==4.1.0
+httpx==0.25.2
+factory-boy==3.3.0
+faker==20.1.0
+
+# Code Quality
+black==23.11.0
+isort==5.12.0
+flake8==6.1.0
+mypy==1.7.1
+bandit==1.7.5
+
+# Documentation
+sphinx==7.2.6
+sphinx-rtd-theme==1.3.0
+
+# Monitoring & Logging
+prometheus-client==0.19.0
+opentelemetry-api==1.21.0
+opentelemetry-sdk==1.21.0
+
+# Email
+email-validator==2.1.0
+fastapi-mail==1.4.1
+
+# Social Media APIs
+tweepy==4.14.0
+
+# Optional: Production Dependencies
+gunicorn==21.2.0
+
+# Optional: Image Processing
+opencv-python-headless==4.8.1.78
+
+# Optional: AI/ML
+scikit-learn==1.3.2
+
+# Optional: Blockchain Analytics
+web3[tester]==6.11.3
