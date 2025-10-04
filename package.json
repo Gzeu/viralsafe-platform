@@ -1,53 +1,104 @@
 {
   "name": "viralsafe-platform",
-  "version": "1.0.0",
-  "description": "🚀 ViralSafe - Transformă viralitatea în active digitale prin Web3 și NFT",
+  "version": "0.3.0",
+  "description": "🚀 ViralSafe - Transformă viralitatea în active digitale prin Web3 și NFT. Platformă inovatoare care combină elementele sociale cu monetizarea blockchain.",
   "private": true,
   "workspaces": [
     "frontend",
-    "backend",
-    "contracts"
+    "backend", 
+    "contracts",
+    "docs"
   ],
   "scripts": {
+    "preinstall": "node -e \"if(process.env.npm_execpath.indexOf('yarn') === -1) throw new Error('Please use npm instead of yarn')\"",
     "install:all": "npm install && npm run install:frontend && npm run install:backend && npm run install:contracts",
     "install:frontend": "cd frontend && npm install",
     "install:backend": "cd backend && pip install -r requirements.txt",
     "install:contracts": "cd contracts && npm install",
-    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:contracts\"",
+    "postinstall": "husky install",
+    "dev": "concurrently -n \"FRONTEND,BACKEND,CONTRACTS\" -c \"cyan,yellow,green\" \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:contracts\"",
     "dev:frontend": "cd frontend && npm run dev",
-    "dev:backend": "cd backend && uvicorn main:app --reload --port 8000",
+    "dev:backend": "cd backend && uvicorn main:app --reload --port 8000 --host 0.0.0.0",
     "dev:contracts": "cd contracts && npx hardhat node",
-    "build": "npm run build:frontend && npm run build:contracts",
+    "dev:full": "concurrently -n \"FRONTEND,BACKEND,CONTRACTS,REDIS,MONGO\" -c \"cyan,yellow,green,magenta,blue\" \"npm run dev:frontend\" \"npm run dev:backend\" \"npm run dev:contracts\" \"redis-server\" \"mongod\"",
+    "start": "npm run start:frontend",
+    "start:frontend": "cd frontend && npm start",
+    "start:backend": "cd backend && uvicorn main:app --host 0.0.0.0 --port 8000",
+    "build": "npm run build:contracts && npm run build:frontend",
     "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && python -m pip install --upgrade pip && pip install -r requirements.txt",
     "build:contracts": "cd contracts && npx hardhat compile",
-    "test": "npm run test:frontend && npm run test:backend && npm run test:contracts",
-    "test:frontend": "cd frontend && npm run test",
-    "test:backend": "cd backend && python -m pytest tests/ -v",
+    "build:all": "npm run build:contracts && npm run build:frontend && npm run build:backend",
+    "test": "npm run test:contracts && npm run test:frontend && npm run test:backend",
+    "test:frontend": "cd frontend && npm run test -- --passWithNoTests",
+    "test:backend": "cd backend && python -m pytest tests/ -v --cov=app --cov-report=html",
     "test:contracts": "cd contracts && npx hardhat test",
-    "lint": "npm run lint:frontend && npm run lint:contracts",
+    "test:watch": "concurrently \"npm run test:frontend -- --watch\" \"npm run test:backend -- --watch\"",
+    "test:coverage": "npm run test:frontend -- --coverage && npm run test:backend && npm run test:contracts -- --gas-reporter",
+    "lint": "npm run lint:frontend && npm run lint:backend && npm run lint:contracts",
     "lint:frontend": "cd frontend && npm run lint",
+    "lint:backend": "cd backend && flake8 app/ tests/ && black --check app/ tests/",
     "lint:contracts": "cd contracts && npx solhint 'contracts/**/*.sol'",
+    "lint:fix": "npm run lint:fix:frontend && npm run lint:fix:backend && npm run lint:fix:contracts",
+    "lint:fix:frontend": "cd frontend && npm run lint:fix && npm run format",
+    "lint:fix:backend": "cd backend && black app/ tests/ && isort app/ tests/",
+    "lint:fix:contracts": "cd contracts && npx prettier --write 'contracts/**/*.sol'",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md,yml,yaml}\"",
+    "type-check": "cd frontend && npm run type-check",
+    "analyze": "cd frontend && npm run analyze",
     "deploy:testnet": "cd contracts && npx hardhat run scripts/deploy.js --network bscTestnet",
     "deploy:mainnet": "cd contracts && npx hardhat run scripts/deploy.js --network bsc",
+    "deploy:local": "cd contracts && npx hardhat run scripts/deploy.js --network localhost",
     "verify:testnet": "cd contracts && npx hardhat run scripts/verify.js --network bscTestnet",
     "verify:mainnet": "cd contracts && npx hardhat run scripts/verify.js --network bsc",
-    "clean": "rm -rf node_modules frontend/node_modules contracts/node_modules frontend/.next contracts/artifacts contracts/cache",
+    "contracts:compile": "cd contracts && npx hardhat compile",
+    "contracts:test": "cd contracts && npx hardhat test",
+    "contracts:coverage": "cd contracts && npx hardhat coverage",
+    "contracts:gas": "cd contracts && npx hardhat test --gas-reporter",
+    "contracts:size": "cd contracts && npx hardhat size-contracts",
+    "contracts:flatten": "cd contracts && npx hardhat flatten",
+    "security:audit": "cd contracts && slither . && mythril analyze contracts/*.sol",
+    "clean": "npm run clean:deps && npm run clean:build",
+    "clean:deps": "rm -rf node_modules frontend/node_modules backend/__pycache__ contracts/node_modules",
+    "clean:build": "rm -rf frontend/.next frontend/dist contracts/artifacts contracts/cache backend/.pytest_cache",
+    "clean:logs": "rm -rf logs/ *.log frontend/*.log backend/*.log contracts/*.log",
+    "reset": "npm run clean && npm run install:all",
     "docker:build": "docker-compose build",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
-    "docs:serve": "cd docs && python -m http.server 8080"
+    "docker:logs": "docker-compose logs -f",
+    "docker:clean": "docker-compose down -v --remove-orphans && docker system prune -f",
+    "docs:build": "cd docs && npm run build",
+    "docs:serve": "cd docs && python -m http.server 8080",
+    "docs:dev": "cd docs && npm run dev",
+    "backup:db": "mongodump --out ./backups/$(date +%Y-%m-%d_%H-%M-%S)",
+    "restore:db": "mongorestore ./backups/latest",
+    "migrate:up": "cd backend && python migrate.py up",
+    "migrate:down": "cd backend && python migrate.py down",
+    "seed:db": "cd backend && python seed.py",
+    "health:check": "curl -f http://localhost:3000/health && curl -f http://localhost:8000/health",
+    "pre-commit": "lint-staged",
+    "prepare": "husky install",
+    "release": "standard-version",
+    "release:minor": "standard-version --release-as minor",
+    "release:major": "standard-version --release-as major",
+    "changelog": "standard-version --dry-run"
   },
   "devDependencies": {
+    "@commitlint/cli": "^18.4.3",
+    "@commitlint/config-conventional": "^18.4.3",
     "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
     "husky": "^8.0.3",
     "lint-staged": "^15.1.0",
-    "prettier": "^3.1.0"
+    "prettier": "^3.1.0",
+    "standard-version": "^9.5.0"
   },
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged",
-      "pre-push": "npm test"
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
+      "pre-push": "npm run test && npm run lint"
     }
   },
   "lint-staged": {
@@ -55,12 +106,42 @@
       "cd frontend && npm run lint:fix",
       "cd frontend && npm run format"
     ],
+    "backend/**/*.{py}": [
+      "cd backend && black",
+      "cd backend && isort",
+      "cd backend && flake8"
+    ],
     "contracts/**/*.sol": [
-      "cd contracts && npx solhint"
+      "cd contracts && npx solhint",
+      "cd contracts && npx prettier --write"
     ],
     "**/*.{json,md,yml,yaml}": [
       "prettier --write"
     ]
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ],
+    "rules": {
+      "type-enum": [
+        2,
+        "always",
+        [
+          "feat",
+          "fix",
+          "docs",
+          "style",
+          "refactor",
+          "perf",
+          "test",
+          "chore",
+          "ci",
+          "build",
+          "revert"
+        ]
+      ]
+    }
   },
   "keywords": [
     "web3",
@@ -76,13 +157,40 @@
     "multiversx",
     "next.js",
     "fastapi",
-    "hardhat"
+    "hardhat",
+    "react",
+    "typescript",
+    "solidity",
+    "mongodb",
+    "redis",
+    "ipfs",
+    "metamask",
+    "walletconnect",
+    "ethereum",
+    "smart-contracts",
+    "tokenomics",
+    "staking",
+    "governance",
+    "marketplace",
+    "royalties",
+    "content-creation",
+    "social-media",
+    "viral-content",
+    "digital-assets"
   ],
   "author": {
     "name": "George Pricop",
     "email": "pricopgeorge@gmail.com",
     "url": "https://github.com/Gzeu"
   },
+  "contributors": [
+    {
+      "name": "George Pricop",
+      "email": "pricopgeorge@gmail.com",
+      "url": "https://github.com/Gzeu",
+      "role": "Lead Developer"
+    }
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -92,8 +200,36 @@
     "url": "https://github.com/Gzeu/viralsafe-platform/issues"
   },
   "homepage": "https://github.com/Gzeu/viralsafe-platform#readme",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/Gzeu"
+  },
   "engines": {
     "node": ">=18.0.0",
-    "npm": ">=9.0.0"
-  }
+    "npm": ">=9.0.0",
+    "python": ">=3.11.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
+  "config": {
+    "port": 3000,
+    "api_port": 8000,
+    "hardhat_port": 8545
+  },
+  "browserslist": [
+    ">= 1%",
+    "last 1 major version",
+    "not dead",
+    "Chrome >= 60",
+    "Firefox >= 60",
+    "Edge >= 79",
+    "Safari >= 12"
+  ]
 }
