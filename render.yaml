@@ -1,0 +1,111 @@
+# Render Blueprint for ViralSafe Platform
+# https://render.com/docs/blueprint-spec
+
+services:
+  # Backend API Service
+  - type: web
+    name: viralsafe-api
+    runtime: python
+    plan: free
+    region: frankfurt  # Closest to Romania
+    branch: main
+    rootDir: backend
+    buildCommand: pip install -r requirements-render.txt
+    startCommand: gunicorn main:app -w 1 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 2 --max-requests 1000 --max-requests-jitter 100
+    
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.5
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+      - key: LOG_LEVEL
+        value: info
+      - key: DATABASE_NAME
+        value: viralsafe
+      - key: API_VERSION
+        value: v1
+      - key: RATE_LIMIT_ENABLED
+        value: true
+      - key: RATE_LIMIT_PER_MINUTE
+        value: 60
+      - key: RATE_LIMIT_PER_HOUR
+        value: 1000
+      - key: MAX_FILE_SIZE
+        value: 10485760
+      - key: ALLOWED_FILE_TYPES
+        value: image/jpeg,image/png,image/gif,video/mp4,video/webm
+      - key: CORS_ORIGINS
+        value: https://viralsafe-frontend.vercel.app,https://viralsafe.io,http://localhost:3000
+      
+      # Secrets (to be set in Render Dashboard)
+      - key: MONGODB_URL
+        sync: false  # Set in Render Dashboard
+      - key: REDIS_URL
+        sync: false  # Set in Render Dashboard
+      - key: JWT_SECRET_KEY
+        sync: false  # Set in Render Dashboard
+      - key: PINATA_JWT_TOKEN
+        sync: false  # Set in Render Dashboard
+      - key: ALCHEMY_API_KEY
+        sync: false  # Set in Render Dashboard
+      - key: BSC_TESTNET_RPC_URL
+        sync: false  # Set in Render Dashboard
+    
+    # Health check configuration
+    healthCheckPath: /health
+    
+    # Auto-deploy on push to main
+    autoDeploy: true
+    
+    # Custom headers for optimization
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /health
+        name: Cache-Control
+        value: no-cache
+      - path: /docs
+        name: Cache-Control
+        value: public, max-age=300
+
+  # Redis Cache (when available)
+  # - type: redis
+  #   name: viralsafe-cache
+  #   plan: free
+  #   maxmemoryPolicy: allkeys-lru
+
+# Static site for documentation (optional)
+# - type: static
+#   name: viralsafe-docs
+#   staticPublishPath: docs/build
+#   buildCommand: cd docs && npm install && npm run build
+#   headers:
+#     - path: /*
+#       name: Cache-Control
+#       value: public, max-age=86400
+
+# Environment Groups (for shared variables)
+envVarGroups:
+  - name: common
+    envVars:
+      - key: TZ
+        value: Europe/Bucharest
+      - key: LANG
+        value: en_US.UTF-8
+      - key: LC_ALL
+        value: en_US.UTF-8
+
+# Databases (when needed)
+# databases:
+#   - name: viralsafe-postgres
+#     databaseName: viralsafe
+#     user: viralsafe_user
