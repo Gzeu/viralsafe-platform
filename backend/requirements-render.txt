@@ -1,0 +1,59 @@
+# FastAPI Core - Optimized for Render deployment
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.2
+pydantic-settings==2.1.0
+
+# Database & Cache
+motor==3.3.2
+pymongo==4.6.0
+redis==5.0.1
+
+# Authentication & Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+bcrypt==4.1.2
+
+# Web3 & Blockchain (Essential only)
+web3==6.11.3
+requests==2.31.0
+
+# HTTP Client
+httpx==0.25.2
+
+# Utilities (Minimal set)
+python-dotenv==1.0.0
+loguru==0.7.2
+python-dateutil==2.8.2
+pytz==2023.3
+
+# Email
+email-validator==2.1.0
+
+# Monitoring (Lightweight)
+prometheus-client==0.19.0
+
+# Production Server
+gunicorn==21.2.0
+
+# Rate Limiting
+slowapi==0.1.9
+
+# CORS
+starlette==0.27.0
+
+# JSON Web Tokens
+PyJWT==2.8.0
+
+# Password Hashing
+argon2-cffi==23.1.0
+
+# Environment Variables
+python-decouple==3.8
+
+# HTTP Status Codes
+http-status==0.2.0
+
+# Timezone handling
+pytz==2023.3
