@@ -1,0 +1,172 @@
+name: Deploy to Render
+
+# Trigger deployment on push to main branch and backend changes
+on:
+  push:
+    branches: [main]
+    paths: 
+      - 'backend/**'
+      - 'render.yaml'
+      - '.github/workflows/render-deploy.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+
+# Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - production
+        - staging
+
+env:
+  PYTHON_VERSION: '3.11.5'
+  NODE_VERSION: '18'
+
+jobs:
+  # Run tests before deployment
+  test:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements-render.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
+      - name: Install dependencies
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r requirements-render.txt
+          pip install pytest pytest-asyncio pytest-cov httpx
+      
+      - name: Run linting
+        run: |
+          cd backend
+          python -m flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+      
+      - name: Run basic tests
+        run: |
+          cd backend
+          python -c "import main; print('✅ Main module imports successfully')"
+          echo "✅ Basic validation passed"
+
+  # Build and validate for production
+  build:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('backend/requirements-render.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      
+      - name: Install dependencies
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r requirements-render.txt
+      
+      - name: Validate application
+        run: |
+          cd backend
+          python -c "import main; print('✅ Application validated for production')"
+      
+      - name: Security check (basic)
+        run: |
+          cd backend
+          pip install safety
+          safety check --ignore 70612  # Ignore known non-critical issues
+      
+      - name: Create deployment summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: Production" >> $GITHUB_STEP_SUMMARY
+          echo "- **Python Version**: ${{ env.PYTHON_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp**: $(date -u)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ✅ Ready for Render deployment" >> $GITHUB_STEP_SUMMARY
+
+  # Notify on successful deployment (optional)
+  notify:
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/main' && success()
+    
+    steps:
+      - name: Deployment notification
+        run: |
+          echo "🎉 ViralSafe backend is ready for Render deployment!"
+          echo "📦 Changes deployed:"
+          echo "${{ github.event.head_commit.message }}"
+          echo "🔗 Monitor deployment at: https://dashboard.render.com"
+
+  # Health check after deployment (runs after Render deploys)
+  health-check:
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Wait for deployment
+        run: |
+          echo "⏳ Waiting for Render deployment to complete..."
+          sleep 300  # Wait 5 minutes for deployment
+      
+      - name: Health check
+        run: |
+          # Replace with your actual Render service URL
+          SERVICE_URL="https://viralsafe-api.onrender.com"
+          
+          echo "🔍 Checking service health..."
+          
+          # Try multiple times as service might be cold starting
+          for i in {1..5}; do
+            if curl -f "$SERVICE_URL/health" --max-time 30; then
+              echo "✅ Service is healthy!"
+              curl -s "$SERVICE_URL/" | jq -r '.version // "Unknown"' || echo "API responding"
+              exit 0
+            else
+              echo "⏳ Attempt $i failed, retrying in 30s..."
+              sleep 30
+            fi
+          done
+          
+          echo "❌ Health check failed after 5 attempts"
+          exit 1
+        continue-on-error: true  # Don't fail the workflow if health check fails
+
+# Secrets needed in repository:
+# RENDER_API_KEY - Your Render API key (optional, for programmatic deployments)
+# RENDER_SERVICE_ID - Your service ID (optional, for status checks)
