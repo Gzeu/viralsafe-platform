@@ -1,8 +1,8 @@
 name: ViralSafe Uptime Monitor
 
- on:
+on:
   schedule:
-    - cron: '*/5 * * * *'  # Every 5 minutes
+    - cron: '*/15 * * * *'  # Every 15 minutes (reduced frequency)
   workflow_dispatch:
   push:
     branches: [main]
@@ -19,81 +19,46 @@ env:
 jobs:
   uptime-check:
     runs-on: ubuntu-latest
-    name: Check ViralSafe Platform Health
+    name: Check ViralSafe Production
     
     steps:
-      - name: Check GitHub Pages
-        id: github-pages
-        run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://gzeu.github.io/viralsafe-platform/ || echo "000")
-          if [ "$STATUS" = "200" ]; then
-            echo "status=success" >> $GITHUB_OUTPUT
-            echo "✅ GitHub Pages: Online (Status: $STATUS)"
-          else
-            echo "status=failure" >> $GITHUB_OUTPUT
-            echo "❌ GitHub Pages: Offline (Status: $STATUS)"
-            exit 1
-          fi
-          
       - name: Check Vercel Frontend
         id: vercel-frontend
         run: |
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://viralsafe-platform-deploy-git-main-gzeus-projects.vercel.app/ || echo "000")
           if [ "$STATUS" = "200" ]; then
             echo "status=success" >> $GITHUB_OUTPUT
-            echo "✅ Vercel Frontend: Online (Status: $STATUS)"
+            echo "✅ ViralSafe Production: Online (Status: $STATUS)"
           else
             echo "status=failure" >> $GITHUB_OUTPUT
-            echo "❌ Vercel Frontend: Offline (Status: $STATUS)"
+            echo "❌ ViralSafe Production: Offline (Status: $STATUS)"
             exit 1
           fi
           
-      - name: Check Render Backend
-        id: render-backend
-        continue-on-error: true
-        run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://viralsafe-backend.onrender.com/health || echo "000")
-          if [ "$STATUS" = "200" ]; then
-            echo "status=success" >> $GITHUB_OUTPUT
-            echo "✅ Render Backend: Online (Status: $STATUS)"
-          else
-            echo "status=failure" >> $GITHUB_OUTPUT
-            echo "⚠️ Render Backend: Offline (Status: $STATUS) - Expected during setup"
-          fi
-          
-      - name: Create Issue on Frontend Failure
+      - name: Create Issue on Production Failure
         if: failure()
         uses: actions/github-script@v7
         with:
           script: |
-            const title = `🚨 ViralSafe Platform Alert - ${new Date().toISOString().split('T')[0]}`;
+            const title = `🚨 ViralSafe Production Alert - ${new Date().toISOString().split('T')[0]}`;
             const timestamp = new Date().toLocaleString('ro-RO', { timeZone: 'Europe/Bucharest' });
             
-            let body = `# ViralSafe Platform Health Alert\n\n`;
+            let body = `# ViralSafe Production Alert\n\n`;
             body += `**Alert Time**: ${timestamp} (Bucharest Time)\n\n`;
-            body += `## Critical Services Down\n\n`;
-            
-            if ('${{ steps.github-pages.outcome }}' === 'failure') {
-              body += `❌ **GitHub Pages**: OFFLINE\n`;
-              body += `- URL: https://gzeu.github.io/viralsafe-platform/\n\n`;
-            }
-            
-            if ('${{ steps.vercel-frontend.outcome }}' === 'failure') {
-              body += `❌ **Vercel Frontend**: OFFLINE\n`;
-              body += `- URL: https://viralsafe-platform-deploy-git-main-gzeus-projects.vercel.app/\n\n`;
-            }
-            
+            body += `## Production Service Down\n\n`;
+            body += `❌ **Vercel Frontend**: OFFLINE\n`;
+            body += `- URL: https://viralsafe-platform-deploy-git-main-gzeus-projects.vercel.app/\n\n`;
             body += `## Actions Required\n\n`;
             body += `1. Check Vercel dashboard for deployment issues\n`;
-            body += `2. Check GitHub Pages settings and build status\n`;
-            body += `3. Review recent commits for breaking changes\n\n`;
-            body += `*This alert was generated automatically. Check again in 5 minutes.*`;
+            body += `2. Review recent commits for breaking changes\n`;
+            body += `3. Check build logs and deployment status\n\n`;
+            body += `*This alert was generated automatically.*`;
             
             const issues = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
-              labels: 'uptime-alert'
+              labels: 'production-alert'
             });
             
             if (issues.data.length === 0) {
@@ -102,11 +67,11 @@ jobs:
                 repo: context.repo.repo,
                 title: title,
                 body: body,
-                labels: ['uptime-alert', 'critical']
+                labels: ['production-alert', 'critical']
               });
             }
             
-      - name: Close Issues on Success
+      - name: Close Issues on Recovery
         if: success()
         uses: actions/github-script@v7
         with:
@@ -115,7 +80,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               state: 'open',
-              labels: 'uptime-alert'
+              labels: 'production-alert'
             });
             
             for (const issue of issues.data) {
@@ -125,7 +90,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
-                body: `✅ **Services Restored** - ${timestamp}\n\nAll frontend services are operational.`
+                body: `✅ **Production Restored** - ${timestamp}\n\nViralSafe production is operational.`
               });
               
               await github.rest.issues.update({
